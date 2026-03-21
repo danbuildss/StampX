@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Bot } from "lucide-react";
 import { Stamp } from "@/lib/types";
 import { getStamps } from "@/lib/actions";
 import { MOCK_STAMPS } from "@/lib/mock-data";
 import StampCard from "./StampCard";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "human" | "agent" | "verified" | "rewarded";
+type Filter = "all" | "human" | "agent" | "indexed" | "verified" | "rewarded";
 type Sort = "latest" | "score" | "reward";
 
-const FILTERS: { value: Filter; label: string }[] = [
+const FILTERS: { value: Filter; label: string; dot?: string }[] = [
   { value: "all", label: "All" },
   { value: "human", label: "Humans" },
   { value: "agent", label: "Agents" },
+  { value: "indexed", label: "Indexed", dot: "teal" },
   { value: "verified", label: "Verified" },
   { value: "rewarded", label: "Rewarded" },
 ];
@@ -44,6 +45,7 @@ export default function FeedPage() {
     .filter((s) => {
       if (filter === "human") return s.subject_type === "human";
       if (filter === "agent") return s.subject_type === "agent";
+      if (filter === "indexed") return s.index_status === "indexed" || s.index_status === "claimed";
       if (filter === "verified") return s.verification_level === "verified" || s.verification_level === "onchain";
       if (filter === "rewarded") return !!s.reward_amount;
       return true;
@@ -54,6 +56,10 @@ export default function FeedPage() {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
+  const indexedCount = stamps.filter(
+    (s) => s.index_status === "indexed" || s.index_status === "claimed"
+  ).length;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
@@ -61,7 +67,7 @@ export default function FeedPage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text)]">Live Stamps</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            See what creators, builders, and AI agents are proving onchain.
+            Proof of work from creators, builders, and AI agents on Base.
           </p>
         </div>
         <Link
@@ -81,13 +87,27 @@ export default function FeedPage() {
               key={f.value}
               onClick={() => setFilter(f.value)}
               className={cn(
-                "px-4 py-2 rounded-xl text-sm font-medium transition-all border",
+                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border",
                 filter === f.value
-                  ? "bg-blue-500/10 border-blue-500/40 text-blue-400"
+                  ? f.value === "indexed"
+                    ? "bg-teal-500/10 border-teal-500/40 text-teal-400"
+                    : "bg-blue-500/10 border-blue-500/40 text-blue-400"
                   : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[#2d3f52]"
               )}
             >
+              {f.value === "agent" && <Bot size={12} />}
               {f.label}
+              {f.value === "indexed" && indexedCount > 0 && (
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{
+                    background: "rgba(20,184,166,0.15)",
+                    color: "#2dd4bf",
+                  }}
+                >
+                  {indexedCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -110,10 +130,11 @@ export default function FeedPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-4 gap-3 mb-8">
         {[
           { label: "Total Stamps", value: stamps.length },
           { label: "Verified", value: stamps.filter((s) => s.verification_level !== "self").length },
+          { label: "Auto-Indexed", value: indexedCount },
           { label: "Active Agents", value: stamps.filter((s) => s.subject_type === "agent").length },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl px-4 py-3">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, Share2, Eye, MousePointer, TrendingUp, Users } from "lucide-react";
+import { ExternalLink, Share2, Eye, MousePointer, TrendingUp, Users, Zap } from "lucide-react";
 import { Stamp } from "@/lib/types";
 import { cn, formatNumber, timeAgo } from "@/lib/utils";
 
@@ -23,6 +23,9 @@ interface StampCardProps {
 }
 
 function getVerificationBadge(stamp: Stamp) {
+  if (stamp.index_status === "indexed" || stamp.index_status === "claimed") {
+    return <span className="badge badge-indexed">⬡ Indexed</span>;
+  }
   if (stamp.verification_level === "onchain") {
     return <span className="badge badge-onchain">⬡ Onchain</span>;
   }
@@ -42,6 +45,7 @@ export default function StampCard({
 }: StampCardProps) {
   const isAgent = stamp.subject_type === "agent";
   const hasReward = !!stamp.reward_amount;
+  const isIndexed = stamp.index_status === "indexed" || stamp.index_status === "claimed";
 
   const handleShare = () => {
     const url = `${window.location.origin}/stamp/${stamp.id}`;
@@ -55,19 +59,30 @@ export default function StampCard({
     .toUpperCase()
     .slice(0, 2);
 
-  const cardStyle = isAgent
-    ? {
-        background: "rgba(26, 14, 40, 0.85)",
-        border: "1px solid rgba(139, 92, 246, 0.22)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-      }
-    : {
-        background: "rgba(17, 23, 32, 0.8)",
-        border: "1px solid var(--border)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-      };
+  // Card background based on type
+  let cardStyle: React.CSSProperties;
+  if (isIndexed && isAgent) {
+    cardStyle = {
+      background: "rgba(20, 30, 30, 0.85)",
+      border: "1px solid rgba(20, 184, 166, 0.22)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+    };
+  } else if (isAgent) {
+    cardStyle = {
+      background: "rgba(26, 14, 40, 0.85)",
+      border: "1px solid rgba(139, 92, 246, 0.22)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+    };
+  } else {
+    cardStyle = {
+      background: "var(--bg-card)",
+      border: "1px solid var(--border)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+    };
+  }
 
   return (
     <div
@@ -82,12 +97,14 @@ export default function StampCard({
             className={cn(
               "rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
               size === "full" ? "w-12 h-12 text-base" : "w-10 h-10",
-              isAgent
+              isIndexed && isAgent
+                ? "bg-teal-900/40 text-teal-300"
+                : isAgent
                 ? "bg-purple-900/50 text-purple-300"
                 : "bg-blue-900/40 text-blue-300"
             )}
           >
-            {isAgent ? "⬡" : initials}
+            {isAgent ? (isIndexed ? <Zap size={16} /> : "⬡") : initials}
           </div>
           <div>
             <p className="font-semibold text-[var(--text)] leading-tight">
@@ -106,8 +123,8 @@ export default function StampCard({
                 className="badge badge-self"
                 style={{
                   background: "rgba(59,130,246,0.06)",
-                  color: "#6b7280",
-                  border: "1px solid #1e2d3d",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--border)",
                 }}
               >
                 {TYPE_LABELS[stamp.stamp_type] || stamp.stamp_type}
@@ -149,7 +166,7 @@ export default function StampCard({
         </div>
       )}
 
-      {/* Reward block — pops */}
+      {/* Reward block */}
       {hasReward && (
         <div
           className="rounded-xl px-3 py-2.5 flex items-center justify-between"
@@ -178,7 +195,9 @@ export default function StampCard({
               className="h-1.5 rounded-full"
               style={{
                 width: `${stamp.score}%`,
-                background: isAgent
+                background: isIndexed
+                  ? "linear-gradient(90deg, #0d9488, #2dd4bf)"
+                  : isAgent
                   ? "linear-gradient(90deg, #7c3aed, #a78bfa)"
                   : "linear-gradient(90deg, #3b82f6, #8b5cf6)",
               }}
