@@ -15,6 +15,7 @@ export type VerificationLevel = "self" | "verified" | "onchain";
 export interface Stamp {
   id: string;
   creator_name: string;
+  creator_username?: string;
   creator_wallet?: string;
   subject_type: SubjectType;
   agent_platform?: string;

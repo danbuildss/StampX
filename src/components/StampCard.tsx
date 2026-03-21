@@ -69,6 +69,11 @@ export default function StampCard({
             <p className="font-semibold text-[var(--text)] leading-tight">
               {stamp.creator_name}
             </p>
+            {stamp.creator_username && (
+              <p className="text-[11px] text-[var(--text-muted)] leading-tight mb-0.5">
+                {stamp.creator_username}
+              </p>
+            )}
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className={cn("badge", isAgent ? "badge-agent" : "badge-human")}>
                 {isAgent ? "Agent" : "Human"}
