@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap, Plus, Bot, Sun, Moon } from "lucide-react";
+import { Zap, Plus, Bot, Sun, Moon, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { getPendingStamps } from "@/lib/actions";
 
 function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -33,14 +34,19 @@ function ThemeToggle() {
   );
 }
 
-const NAV_LINKS = [
-  { href: "/feed", label: "Feed" },
-  { href: "/agents", label: "Agents", icon: <Bot size={13} /> },
-  { href: "/profile/demo", label: "Profile" },
-];
-
 export default function AppNav() {
   const pathname = usePathname();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    getPendingStamps().then(({ data }) => setPendingCount(data.length));
+  }, [pathname]);
+
+  const NAV_LINKS = [
+    { href: "/feed", label: "Feed", icon: null },
+    { href: "/agents", label: "Agents", icon: <Bot size={13} /> },
+    { href: "/profile/demo", label: "Profile", icon: null },
+  ];
 
   return (
     <nav className="sticky top-0 z-50 border-b border-[var(--border)] glass">
@@ -70,6 +76,28 @@ export default function AppNav() {
               {link.label}
             </Link>
           ))}
+
+          {/* Review link with pending badge */}
+          <Link
+            href="/review"
+            className={cn(
+              "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+              pathname === "/review"
+                ? "text-[var(--text)] bg-white/[0.06]"
+                : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-white/[0.04]"
+            )}
+          >
+            <ClipboardCheck size={13} />
+            Review
+            {pendingCount > 0 && (
+              <span
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                style={{ background: "#14b8a6" }}
+              >
+                {pendingCount > 9 ? "9+" : pendingCount}
+              </span>
+            )}
+          </Link>
 
           <ThemeToggle />
 

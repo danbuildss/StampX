@@ -151,3 +151,42 @@ export async function updateAgentLastIndexed(
     .update({ last_indexed: new Date().toISOString() })
     .eq("id", agentId);
 }
+
+// =============================================
+// REVIEW / MODERATION ACTIONS
+// =============================================
+
+export async function getPendingStamps(): Promise<{ data: Stamp[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("stamps")
+    .select("*")
+    .eq("index_status", "indexed")
+    .order("indexed_at", { ascending: false });
+
+  if (error) return { data: [], error: error.message };
+  return { data: data || [], error: null };
+}
+
+export async function approveStamp(
+  id: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("stamps")
+    .update({ index_status: "claimed" })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function rejectStamp(
+  id: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("stamps")
+    .delete()
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}

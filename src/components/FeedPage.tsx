@@ -9,14 +9,14 @@ import { MOCK_STAMPS } from "@/lib/mock-data";
 import StampCard from "./StampCard";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "human" | "agent" | "indexed" | "verified" | "rewarded";
+type Filter = "all" | "human" | "agent" | "approved" | "verified" | "rewarded";
 type Sort = "latest" | "score" | "reward";
 
-const FILTERS: { value: Filter; label: string; dot?: string }[] = [
+const FILTERS: { value: Filter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "human", label: "Humans" },
   { value: "agent", label: "Agents" },
-  { value: "indexed", label: "Indexed", dot: "teal" },
+  { value: "approved", label: "Auto-Indexed" },
   { value: "verified", label: "Verified" },
   { value: "rewarded", label: "Rewarded" },
 ];
@@ -35,8 +35,12 @@ export default function FeedPage() {
 
   useEffect(() => {
     setLoading(true);
+    // Only fetch manual + claimed stamps — raw "indexed" stays in review queue
     getStamps({ limit: 50 }).then(({ data }) => {
-      if (data.length > 0) setStamps([...data, ...MOCK_STAMPS]);
+      const visible = data.filter(
+        (s) => !s.index_status || s.index_status === "manual" || s.index_status === "claimed"
+      );
+      if (visible.length > 0) setStamps([...visible, ...MOCK_STAMPS]);
       setLoading(false);
     });
   }, []);
@@ -45,7 +49,8 @@ export default function FeedPage() {
     .filter((s) => {
       if (filter === "human") return s.subject_type === "human";
       if (filter === "agent") return s.subject_type === "agent";
-      if (filter === "indexed") return s.index_status === "indexed" || s.index_status === "claimed";
+      // "Auto-Indexed" = approved (claimed) agent stamps only
+      if (filter === "approved") return s.index_status === "claimed";
       if (filter === "verified") return s.verification_level === "verified" || s.verification_level === "onchain";
       if (filter === "rewarded") return !!s.reward_amount;
       return true;
@@ -56,9 +61,7 @@ export default function FeedPage() {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
-  const indexedCount = stamps.filter(
-    (s) => s.index_status === "indexed" || s.index_status === "claimed"
-  ).length;
+  const approvedIndexedCount = stamps.filter((s) => s.index_status === "claimed").length;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -89,7 +92,7 @@ export default function FeedPage() {
               className={cn(
                 "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all border",
                 filter === f.value
-                  ? f.value === "indexed"
+                  ? f.value === "approved"
                     ? "bg-teal-500/10 border-teal-500/40 text-teal-400"
                     : "bg-blue-500/10 border-blue-500/40 text-blue-400"
                   : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[#2d3f52]"
@@ -97,7 +100,7 @@ export default function FeedPage() {
             >
               {f.value === "agent" && <Bot size={12} />}
               {f.label}
-              {f.value === "indexed" && indexedCount > 0 && (
+              {f.value === "approved" && approvedIndexedCount > 0 && (
                 <span
                   className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   style={{
@@ -105,7 +108,7 @@ export default function FeedPage() {
                     color: "#2dd4bf",
                   }}
                 >
-                  {indexedCount}
+                  {approvedIndexedCount}
                 </span>
               )}
             </button>
@@ -134,7 +137,7 @@ export default function FeedPage() {
         {[
           { label: "Total Stamps", value: stamps.length },
           { label: "Verified", value: stamps.filter((s) => s.verification_level !== "self").length },
-          { label: "Auto-Indexed", value: indexedCount },
+          { label: "Auto-Indexed", value: approvedIndexedCount },
           { label: "Active Agents", value: stamps.filter((s) => s.subject_type === "agent").length },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-xl px-4 py-3">
