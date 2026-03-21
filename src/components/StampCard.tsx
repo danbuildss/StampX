@@ -22,12 +22,24 @@ interface StampCardProps {
   showActions?: boolean;
 }
 
+function getVerificationBadge(stamp: Stamp) {
+  if (stamp.verification_level === "onchain") {
+    return <span className="badge badge-onchain">⬡ Onchain</span>;
+  }
+  if (stamp.verification_level === "verified") {
+    return <span className="badge badge-verified">✓ Verified</span>;
+  }
+  if (stamp.source_link) {
+    return <span className="badge badge-linked">⬡ Linked Source</span>;
+  }
+  return <span className="badge badge-self-reported">○ Self Reported</span>;
+}
+
 export default function StampCard({
   stamp,
   size = "compact",
   showActions = true,
 }: StampCardProps) {
-  const isVerified = stamp.verification_level === "verified" || stamp.verification_level === "onchain";
   const isAgent = stamp.subject_type === "agent";
   const hasReward = !!stamp.reward_amount;
 
@@ -43,12 +55,24 @@ export default function StampCard({
     .toUpperCase()
     .slice(0, 2);
 
+  const cardStyle = isAgent
+    ? {
+        background: "rgba(26, 14, 40, 0.85)",
+        border: "1px solid rgba(139, 92, 246, 0.22)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }
+    : {
+        background: "rgba(17, 23, 32, 0.8)",
+        border: "1px solid var(--border)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      };
+
   return (
     <div
-      className={cn(
-        "stamp-card glass rounded-2xl p-5 flex flex-col gap-4",
-        size === "full" && "p-6"
-      )}
+      className={cn("stamp-card rounded-2xl p-5 flex flex-col gap-4", size === "full" && "p-6")}
+      style={cardStyle}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -59,11 +83,11 @@ export default function StampCard({
               "rounded-xl flex items-center justify-center font-bold text-sm shrink-0",
               size === "full" ? "w-12 h-12 text-base" : "w-10 h-10",
               isAgent
-                ? "bg-purple-900/40 text-purple-300"
+                ? "bg-purple-900/50 text-purple-300"
                 : "bg-blue-900/40 text-blue-300"
             )}
           >
-            {isAgent ? "🤖" : initials}
+            {isAgent ? "⬡" : initials}
           </div>
           <div>
             <p className="font-semibold text-[var(--text)] leading-tight">
@@ -78,15 +102,17 @@ export default function StampCard({
               <span className={cn("badge", isAgent ? "badge-agent" : "badge-human")}>
                 {isAgent ? "Agent" : "Human"}
               </span>
-              <span className="badge badge-self" style={{ background: "rgba(59,130,246,0.08)", color: "#6b7280", border: "1px solid #1e2d3d" }}>
+              <span
+                className="badge badge-self"
+                style={{
+                  background: "rgba(59,130,246,0.06)",
+                  color: "#6b7280",
+                  border: "1px solid #1e2d3d",
+                }}
+              >
                 {TYPE_LABELS[stamp.stamp_type] || stamp.stamp_type}
               </span>
-              {isVerified && <span className="badge badge-verified">✓ Verified</span>}
-              {hasReward && (
-                <span className="badge badge-reward">
-                  {stamp.reward_amount} {stamp.reward_token}
-                </span>
-              )}
+              {getVerificationBadge(stamp)}
             </div>
           </div>
         </div>
@@ -123,6 +149,26 @@ export default function StampCard({
         </div>
       )}
 
+      {/* Reward block — pops */}
+      {hasReward && (
+        <div
+          className="rounded-xl px-3 py-2.5 flex items-center justify-between"
+          style={{
+            background: "rgba(245,158,11,0.07)",
+            border: "1px solid rgba(245,158,11,0.22)",
+            boxShadow: "0 0 14px rgba(245,158,11,0.07)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-base">💰</span>
+            <span className="text-sm font-bold text-amber-400">
+              {stamp.reward_amount} {stamp.reward_token}
+            </span>
+          </div>
+          <span className="text-[11px] text-amber-600 font-medium">Reward attached</span>
+        </div>
+      )}
+
       {/* Score bar */}
       {stamp.score && (
         <div className="flex items-center gap-3">
@@ -132,7 +178,9 @@ export default function StampCard({
               className="h-1.5 rounded-full"
               style={{
                 width: `${stamp.score}%`,
-                background: "linear-gradient(90deg, #3b82f6, #8b5cf6)",
+                background: isAgent
+                  ? "linear-gradient(90deg, #7c3aed, #a78bfa)"
+                  : "linear-gradient(90deg, #3b82f6, #8b5cf6)",
               }}
             />
           </div>
@@ -187,7 +235,7 @@ function MetricBox({
         {icon}
         <span className="text-[10px] uppercase tracking-wide">{label}</span>
       </div>
-      <p className="text-sm font-bold text-[var(--text)]">{value}</p>
+      <p className="text-base font-bold text-[var(--text)]">{value}</p>
     </div>
   );
 }

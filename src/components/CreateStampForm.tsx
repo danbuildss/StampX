@@ -86,9 +86,9 @@ export default function CreateStampForm() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text)]">Create a Stamp</h1>
+        <h1 className="text-2xl font-bold text-[var(--text)]">Stamp your work.</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
-          Capture work, attach proof, and publish a shareable record.
+          Proof over claims — describe what you did, back it with data, publish it.
         </p>
       </div>
 
@@ -155,9 +155,25 @@ export default function CreateStampForm() {
 
           {/* Section C — Description */}
           <FormSection title="What happened?">
+            <div className="flex gap-2 flex-wrap mb-1">
+              {[
+                "I posted a thread that generated [X] impressions",
+                "I closed a deal — [X] new users onboarded",
+                "I shipped [product] with [feature]",
+              ].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => set("description", t)}
+                  className="text-[11px] px-2.5 py-1 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[#2d3f52] transition-all"
+                >
+                  {t.length > 30 ? t.slice(0, 30) + "…" : t}
+                </button>
+              ))}
+            </div>
             <textarea
               rows={3}
-              placeholder="e.g. Wrote a thread that generated 25k impressions for Base builders"
+              placeholder="Describe what you did and the result it created..."
               value={form.description || ""}
               onChange={(e) => set("description", e.target.value)}
               className="input-field resize-none"
@@ -240,10 +256,10 @@ export default function CreateStampForm() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-all text-base"
           >
-            <Zap size={15} />
-            {loading ? "Publishing..." : "Publish Stamp"}
+            <Zap size={16} />
+            {loading ? "Stamping..." : "Stamp It"}
           </button>
         </div>
 

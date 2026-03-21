@@ -20,8 +20,9 @@ const TABS: { value: Tab; label: string }[] = [
 
 // Demo profile for /profile/demo
 const DEMO_PROFILE = {
-  name: "DanBuilds",
-  bio: "Creator / Builder / BD · Stamping work across Base, media, and agent systems",
+  name: "Dan",
+  username: "@danbuilds",
+  bio: "Creator · Builder · BD — stamping work across Base, media, and agent systems",
   wallet: "0x1234...abcd",
 };
 
@@ -57,6 +58,7 @@ export default function ProfilePage({ wallet }: { wallet: string }) {
   const verifiedCount = stamps.filter((s) => s.verification_level !== "self").length;
 
   const displayName = isDemo ? DEMO_PROFILE.name : wallet.slice(0, 12) + "...";
+  const displayUsername = isDemo ? DEMO_PROFILE.username : null;
   const displayBio = isDemo ? DEMO_PROFILE.bio : "StampX contributor";
 
   const handleCopy = () => {
@@ -76,7 +78,10 @@ export default function ProfilePage({ wallet }: { wallet: string }) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-[var(--text)]">{displayName}</h1>
-              <p className="text-sm text-[var(--text-muted)] mt-0.5 max-w-sm">{displayBio}</p>
+              {displayUsername && (
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{displayUsername}</p>
+              )}
+              <p className="text-sm text-[var(--text-muted)] mt-1 max-w-sm">{displayBio}</p>
               {!isDemo && (
                 <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">{wallet}</p>
               )}
@@ -100,19 +105,27 @@ export default function ProfilePage({ wallet }: { wallet: string }) {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Total Stamps", value: stamps.length },
-            { label: "Verified", value: verifiedCount },
-            { label: "Total Rewards", value: `${totalRewards} USDC` },
-            { label: "Total Reach", value: totalViews > 0 ? formatNumber(totalViews) : "—" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white/[0.03] border border-[var(--border)] rounded-xl p-3 text-center">
-              <p className="text-lg font-bold text-[var(--text)]">{stat.value}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">{stat.label}</p>
-            </div>
-          ))}
+        {/* Onchain Resume Stats */}
+        <div>
+          <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-3">
+            Onchain Resume
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Stamps", value: stamps.length.toString() },
+              {
+                label: "Verified Rate",
+                value: stamps.length > 0 ? `${Math.round((verifiedCount / stamps.length) * 100)}%` : "—",
+              },
+              { label: "Rewards", value: totalRewards > 0 ? `${totalRewards} USDC` : "—" },
+              { label: "Total Reach", value: totalViews > 0 ? formatNumber(totalViews) : "—" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white/[0.03] border border-[var(--border)] rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-[var(--text)]">{stat.value}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
