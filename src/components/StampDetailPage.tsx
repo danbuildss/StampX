@@ -56,12 +56,12 @@ export default function StampDetailPage({ id }: { id: string }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: `StampX — ${stamp?.creator_name}`, url: window.location.href });
-    } else {
-      handleCopy();
-    }
+  const handleShareX = () => {
+    if (!stamp) return;
+    const text = `${stamp.description}\n\nVerified on StampX — proof over claims.`;
+    const url = encodeURIComponent(window.location.href);
+    const tweet = encodeURIComponent(text);
+    window.open(`https://twitter.com/intent/tweet?text=${tweet}&url=${url}`, "_blank");
   };
 
   if (loading) {
@@ -111,6 +111,9 @@ export default function StampDetailPage({ id }: { id: string }) {
             </div>
             <div>
               <h1 className="text-lg font-bold text-[var(--text)]">{stamp.creator_name}</h1>
+              {stamp.creator_username && (
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{stamp.creator_username}</p>
+              )}
               {stamp.creator_wallet && (
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{shortWallet(stamp.creator_wallet)}</p>
               )}
@@ -208,22 +211,29 @@ export default function StampDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 mb-10">
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-2 flex-1 justify-center bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold py-3 rounded-xl transition-all text-sm"
-        >
-          <Share2 size={15} />
-          Share Stamp
-        </button>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl border border-[var(--border)] text-[var(--text-subtle)] hover:text-[var(--text)] hover:border-[#2d3f52] transition-all text-sm font-medium"
-        >
-          {copied ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
-          {copied ? "Copied!" : "Copy link"}
-        </button>
+      {/* Share section */}
+      <div className="glass rounded-2xl p-5 mb-10">
+        <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-4">
+          Share this Stamp
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={handleShareX}
+            className="flex items-center justify-center gap-2 flex-1 bg-black hover:bg-neutral-900 border border-neutral-700 text-white font-semibold py-3 rounded-xl transition-all text-sm"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+            </svg>
+            Post to X
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex items-center justify-center gap-2 flex-1 border border-[var(--border)] text-[var(--text-subtle)] hover:text-[var(--text)] hover:border-[#2d3f52] font-medium py-3 rounded-xl transition-all text-sm"
+          >
+            {copied ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
+            {copied ? "Link copied!" : "Copy link"}
+          </button>
+        </div>
       </div>
 
       {/* Related stamps */}
