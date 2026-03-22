@@ -18,7 +18,6 @@ import { getStamp, getRelatedStamps } from "@/lib/actions";
 import { MOCK_STAMPS } from "@/lib/mock-data";
 import { cn, formatNumber, timeAgo, shortWallet } from "@/lib/utils";
 import StampCard from "./StampCard";
-import ClaimBanner from "./ClaimBanner";
 
 const TYPE_LABELS: Record<string, string> = {
   content: "Content", growth: "Growth", partnership: "Partnership",
@@ -211,11 +210,6 @@ export default function StampDetailPage({ id }: { id: string }) {
           {stamp.creator_wallet && <span>{shortWallet(stamp.creator_wallet)}</span>}
         </div>
       </div>
-
-      {/* Claim banner — agent stamps only */}
-      {isAgent && (
-        <ClaimBanner stampId={stamp.id} claimedBy={stamp.claimed_by} />
-      )}
 
       {/* Share section */}
       <div className="glass rounded-2xl p-5 mb-10">
