@@ -58,3 +58,57 @@ export interface Agent {
   created_at: string;
   last_indexed?: string;
 }
+
+// =============================================
+// CTO AGENT TYPES
+// =============================================
+
+export interface ReviewAction {
+  id: string;
+  stamp_id: string;
+  action: "approved" | "rejected";
+  acted_at: string;
+  reason?: string;
+  actor: string;
+}
+
+export type IncidentSeverity = "low" | "medium" | "high";
+export type IncidentStatus = "open" | "resolved";
+
+export interface SystemIncident {
+  id: string;
+  type: string;
+  severity: IncidentSeverity;
+  title: string;
+  description: string;
+  status: IncidentStatus;
+  created_at: string;
+  resolved_at?: string;
+}
+
+export interface CTOReport {
+  id: string;
+  report_type: "daily" | "weekly" | "incident";
+  summary: string;
+  metrics_json?: CTOMetrics;
+  recommendations_json?: string[];
+  created_at: string;
+}
+
+export interface CTOMetrics {
+  // Product
+  total_stamps: number;
+  stamps_today: number;
+  human_stamps_today: number;
+  agent_stamps_today: number;
+  pending_review: number;
+  live_stamps: number;
+  // Review
+  approved_total: number;
+  rejected_total: number;
+  approval_rate: number;
+  // Agents
+  total_agents: number;
+  active_agents_24h: number;
+  inactive_agents_48h: number;
+}
