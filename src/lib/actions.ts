@@ -1,7 +1,7 @@
 "use server";
 
 import { supabase } from "./supabase";
-import { Stamp, Agent } from "./types";
+import { Stamp, Agent, SystemIncident, CTOReport } from "./types";
 
 // =============================================
 // STAMP ACTIONS
@@ -176,16 +176,119 @@ export async function approveStamp(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Log the review decision
+  await supabase.from("review_actions").insert([{ stamp_id: id, action: "approved" }]);
   return { error: null };
 }
 
 export async function rejectStamp(
   id: string
 ): Promise<{ error: string | null }> {
+  // Log before deleting so we keep the record
+  await supabase.from("review_actions").insert([{ stamp_id: id, action: "rejected" }]);
+
+  const { error } = await supabase.from("stamps").delete().eq("id", id);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+// =============================================
+// CTO AGENT ACTIONS
+// =============================================
+
+export async function getOpenIncidents(): Promise<{ data: SystemIncident[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("system_incidents")
+    .select("*")
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
+
+  if (error) return { data: [], error: error.message };
+  return { data: data || [], error: null };
+}
+
+export async function createIncident(
+  incident: Omit<SystemIncident, "id" | "created_at" | "resolved_at" | "status">
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("system_incidents").insert([incident]);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function resolveIncident(
+  id: string
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("system_incidents")
+    .update({ status: "resolved", resolved_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function getCTOReports(limit = 10): Promise<{ data: CTOReport[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("cto_reports")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) return { data: [], error: error.message };
+  return { data: data || [], error: null };
+}
+
+export async function saveCTOReport(
+  report: Omit<CTOReport, "id" | "created_at">
+): Promise<{ data: CTOReport | null; error: string | null }> {
+  const { data, error } = await supabase
+    .from("cto_reports")
+    .insert([report])
+    .select()
+    .single();
+
+  if (error) return { data: null, error: error.message };
+  return { data, error: null };
+}
+
+// =============================================
+// CLAIM ACTIONS
+// =============================================
+
+export async function claimStamp(
+  stampId: string,
+  wallet: string
+): Promise<{ error: string | null }> {
+  // Fetch stamp + its agent in one go
+  const { data: stamp, error: stampErr } = await supabase
+    .from("stamps")
+    .select("agent_id, claimed_by, subject_type")
+    .eq("id", stampId)
+    .single();
+
+  if (stampErr || !stamp) return { error: "Stamp not found." };
+  if (stamp.subject_type !== "agent") return { error: "Only agent stamps can be claimed." };
+  if (stamp.claimed_by) return { error: "Stamp already claimed." };
+  if (!stamp.agent_id) return { error: "Stamp has no linked agent." };
+
+  // Verify wallet matches the registered agent wallet
+  const { data: agent, error: agentErr } = await supabase
+    .from("agents")
+    .select("wallet")
+    .eq("id", stamp.agent_id)
+    .single();
+
+  if (agentErr || !agent) return { error: "Agent not found." };
+
+  if (agent.wallet.toLowerCase() !== wallet.toLowerCase()) {
+    return { error: "Connected wallet does not match the agent's registered wallet." };
+  }
+
   const { error } = await supabase
     .from("stamps")
-    .delete()
-    .eq("id", id);
+    .update({ claimed_by: wallet.toLowerCase(), creator_wallet: wallet.toLowerCase() })
+    .eq("id", stampId);
 
   if (error) return { error: error.message };
   return { error: null };
