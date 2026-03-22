@@ -60,8 +60,12 @@ create table if not exists stamps (
   source_type text not null default 'manual' check (source_type in ('manual','onchain')),
   source_id text,    -- dedup key e.g. "{agentId}_{YYYY-MM-DD}"
   indexed_at timestamptz,
-  agent_id uuid references agents(id) on delete set null
+  agent_id uuid references agents(id) on delete set null,
+  claimed_by text   -- wallet address of the human who claimed this agent stamp
 );
+
+-- Migration: add claimed_by if upgrading an existing DB
+-- alter table stamps add column if not exists claimed_by text;
 
 -- Unique constraint for dedup (only where source_id is set)
 create unique index if not exists stamps_source_id_idx on stamps(source_id) where source_id is not null;

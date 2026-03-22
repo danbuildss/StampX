@@ -45,6 +45,8 @@ export interface Stamp {
   source_id?: string;
   indexed_at?: string;
   agent_id?: string;
+  // Claim fields
+  claimed_by?: string;
 }
 
 export interface Agent {

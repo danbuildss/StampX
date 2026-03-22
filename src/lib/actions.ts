@@ -190,3 +190,45 @@ export async function rejectStamp(
   if (error) return { error: error.message };
   return { error: null };
 }
+
+// =============================================
+// CLAIM ACTIONS
+// =============================================
+
+export async function claimStamp(
+  stampId: string,
+  wallet: string
+): Promise<{ error: string | null }> {
+  // Fetch stamp + its agent in one go
+  const { data: stamp, error: stampErr } = await supabase
+    .from("stamps")
+    .select("agent_id, claimed_by, subject_type")
+    .eq("id", stampId)
+    .single();
+
+  if (stampErr || !stamp) return { error: "Stamp not found." };
+  if (stamp.subject_type !== "agent") return { error: "Only agent stamps can be claimed." };
+  if (stamp.claimed_by) return { error: "Stamp already claimed." };
+  if (!stamp.agent_id) return { error: "Stamp has no linked agent." };
+
+  // Verify wallet matches the registered agent wallet
+  const { data: agent, error: agentErr } = await supabase
+    .from("agents")
+    .select("wallet")
+    .eq("id", stamp.agent_id)
+    .single();
+
+  if (agentErr || !agent) return { error: "Agent not found." };
+
+  if (agent.wallet.toLowerCase() !== wallet.toLowerCase()) {
+    return { error: "Connected wallet does not match the agent's registered wallet." };
+  }
+
+  const { error } = await supabase
+    .from("stamps")
+    .update({ claimed_by: wallet.toLowerCase(), creator_wallet: wallet.toLowerCase() })
+    .eq("id", stampId);
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
