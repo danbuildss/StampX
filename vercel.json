@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/index-agent?secret=stampx-cron-2024",
-      "schedule": "0 */6 * * *"
-    }
-  ]
-}
+{}
